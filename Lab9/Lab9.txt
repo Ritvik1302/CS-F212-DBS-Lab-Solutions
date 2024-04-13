@@ -1,0 +1,16 @@
+// 1.
+db.comments.find({timestamp: {$gte: "2024-02-01T00:00:00.000Z", $lte: "2024-02-28T23:59:59.000Z"}});
+
+// 2.
+var a = db.users.findOne({username: "user_name1"} , {_id: 1, username: 0, email: 0 , fullName: 0, bio: 0, posts: 0, comments: 0});
+
+db.comments.find({user: a._id});
+
+// 3.
+db.comments.insertOne({_id: "Q3ID", post: "postId1", user: "uniqueUserId1", content: "This is a test comment"});
+
+// 4.
+db.users.updateOne({_id: "uniqueUserId1"}, {$set: {bio: "Q4 BIO"}});
+
+// 5.
+db.comments.deleteMany({user: "uniqueUserId1"});
