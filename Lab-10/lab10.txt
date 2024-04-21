@@ -1,0 +1,76 @@
+// 1.
+db.posts.countDocuments();
+db.comments.countDocuments();
+db.users.countDocuments();
+
+// 2.
+db.posts.aggregate([
+  { $lookup: {
+      from: "comments",
+      localField: "_id",
+      foreignField: "post",
+      as: "postComments"
+  }}
+,
+  { $project: {
+      numberOfComments: { $size: "$comments" },
+   }}
+,
+   { $sort: { numberOfComments: -1 } },
+   { $limit: 3 }
+
+]);
+
+// 3.
+db.posts.aggregate([
+  {
+    $project: {
+      _id: 1,
+      postingHour: { $hour: { $dateFromString: { dateString: "$timestamp" } } }
+    }
+  },
+  {
+    $project: {
+      _id: 1,
+      postingHour: 1,
+      time: {
+        $switch: {
+         branches: [
+            { case: { $lt: ["$postingHour", 6] }, then: "Night" },
+            { case: { $lt: ["$postingHour", 12] }, then: "Morning" },
+            { case: { $lt: ["$postingHour", 18] }, then: "Afternoon" }
+          ],
+          default: "Evening"
+        }
+      }
+    }
+  },
+  {
+    $group: {
+      _id: "$time",
+      avgPosts: { $avg: 1 }
+    }
+  }
+])
+
+
+// 4.
+db.users.aggregate([
+ { $lookup: {
+ from: "posts",
+ localField: "_id",
+ foreignField: "user",
+ as: "userPosts"
+ }},
+ { $unwind: "$userPosts" },
+ { $lookup: {
+ from: "comments",
+ localField: "userPosts._id",
+ foreignField: "post",
+ as: "postComments"
+ }},
+ { $group: {
+ _id: "$_id",
+ averageComments: { $avg: { $size: "$postComments" }}
+ }}
+])
